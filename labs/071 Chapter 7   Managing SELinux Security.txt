@@ -1,0 +1,226 @@
+Security Enhanced Linux (SELinux) 
+ 
+- May <subject> do <action> to <object>?
+- May a web server access files in users' home directories?
+
+- Discretionary Access Control (DAC) :::> The standard access policy based on the user, group, and other permissions.
+    does not enable system administrators to create comprehensive and fine-grained security policies, such as restricting 
+    specific applications to only viewing log files, while allowing other applications to append new data to the log files.
+  
+- Security Enhanced Linux (SELinux) implements Mandatory Access Control (MAC)
+- Every process and system resource has a special security label called an SELinux context
+- The SELinux policy uses these contexts in a series of rules which define how processes can interact with each other and the various system resources.
+     By default, the policy does not allow any interaction unless a rule explicitly grants access.
+
+- Remember that SELinux policy rules are checked after DAC rules. SELinux policy rules are not used if DAC rules deny access first, 
+    which means that no SELinux denial is logged if the traditional DAC rules prevent the access.
+- SELinux contexts have several fields:
+    * user
+    * role
+    * type
+    * security level
+
+
+    # apropos selinux
+    # man -k _selinux
+
+    ==========================================================================================================
+    Benefits of running SELinux
+    SELinux provides the following benefits:
+
+- All processes and files are labeled ===> Access is only allowed if an SELinux policy rule exists that specifically allows it.
+- Fine-grained access control ==> SELinux access decisions are based on all available information, such as an SELinux user, role, type, and, optionally, a security level.
+- SELinux policy is administratively-defined and enforced system-wide.
+- Improved mitigation for privilege escalation attacks. Processes run in domains, and are therefore separated from each other:
+    For example, if the Apache HTTP Server is compromised, an attacker cannot use that process to read files in user home directories, 
+    unless a specific SELinux policy rule was added or configured to allow such access.
+
+However, SELinux is not:
+
+- antivirus software,
+- replacement for passwords, firewalls, and other security systems,
+- all-in-one security solution.
+
+
+Examples
+SELinux decisions, such as allowing or disallowing access, are cached. This cache is known as the Access Vector Cache (AVC)
+/var/log/audit/audit.log
+
+
+============================================================================
+ SELinux states and modes
+
+*  Enforcing mode:  is the default, and recommended, mode of operation; in enforcing mode SELinux operates normally, 
+    enforcing the loaded security policy on the entire system.
+*  permissive mode, the system acts as if SELinux is enforcing the loaded security policy, 
+    including labeling objects and emitting access denial entries in the logs, 
+    but it does not actually deny any operations. While not recommended for production systems, 
+    permissive mode can be helpful for SELinux policy development and debugging.
+* Disabled mode is strongly discouraged; not only does the system avoid enforcing the SELinux policy,
+     it also avoids labeling any persistent objects such as files, making it difficult to enable SELinux in the future.
+# getenforce
+Enforcing
+# setenforce 0
+# getenforce
+Permissive
+# setenforce 1
+# getenforce
+Enforcing
+
+
+
+In Red Hat Enterprise Linux, you can set individual domains to permissive mode while the system runs in enforcing mode. For example, 
+to make the httpd_t domain permissive:
+
+# semanage permissive -a httpd_t
+
+
+==================================================================================
+Changing SELinux states and modes
+==================================================================================
+$ sestatus
+SELinux status:                 enabled
+SELinuxfs mount:                /sys/fs/selinux
+SELinux root directory:         /etc/selinux
+Loaded policy name:             targeted
+Current mode:                   enforcing
+Mode from config file:          enforcing
+Policy MLS status:              enabled
+Policy deny_unknown status:     allowed
+Memory protection checking:     actual (secure)
+Max kernel policy version:      31
+
+Warning
+ - When systems run SELinux in permissive mode, users and processes might label various file-system objects incorrectly
+ - File-system objects created while SELinux is disabled are not labeled at all
+ - This behavior causes problems when changing to enforcing mode because SELinux relies on correct labels of file-system objects.
+
+- To prevent incorrectly labeled and unlabeled files from causing problems, SELinux automatically relabels 
+    file systems when changing from the disabled state to permissive or enforcing mode. 
+
+- Use the  command as root to create the /.autorelabel file containing the -F option to ensure that files are relabeled upon next reboot.
+# fixfiles -F onboot
+
+- Before rebooting the system for relabeling, make sure the system will boot in permissive mode, for example by using the enforcing=0 kernel option. 
+
+-This prevents the system from failing to boot in case the system contains unlabeled files required by systemd before launching the selinux-autorelabel service. 
+
+
+***Changing to permissive mode
+- Use the following procedure to permanently change SELinux mode to permissive. When SELinux is running in permissive mode, SELinux policy is not enforced.
+- The system remains operational and SELinux does not deny any operations but only logs AVC messages, which can be then used for troubleshooting, 
+    debugging, and SELinux policy improvements. Each AVC is logged only once in this case.
+
+
+Prerequisites
+
+- The selinux-policy-targeted, libselinux-utils, and policycoreutils packages are installed on your system.
+The selinux=0 or enforcing=0 kernel parameters are not used.
+
+1. Open the /etc/selinux/config file in a text editor of your choice, for example
+# vim /etc/selinux/config
+2. Configure the SELINUX=permissive option:
+# This file controls the state of SELinux on the system.
+# SELINUX= can take one of these three values:
+#       enforcing - SELinux security policy is enforced.
+#       permissive - SELinux prints warnings instead of enforcing.
+#       disabled - No SELinux policy is loaded.
+SELINUX=permissive
+# SELINUXTYPE= can take one of these two values:
+#       targeted - Targeted processes are protected,
+#       mls - Multi Level Security protection.
+SELINUXTYPE=targeted
+
+
+
+3- Restart the system:
+
+# reboot
+
+4- Verification
+
+After the system restarts, confirm that the getenforce command returns Permissive:
+
+$ getenforce
+Permissive
+
+
+- Configure the SELINUX=enforcing option:
+
+# This file controls the state of SELinux on the system.
+# SELINUX= can take one of these three values:
+#       enforcing - SELinux security policy is enforced.
+#       permissive - SELinux prints warnings instead of enforcing.
+#       disabled - No SELinux policy is loaded.
+SELINUX=enforcing
+# SELINUXTYPE= can take one of these two values:
+#       targeted - Targeted processes are protected,
+#       mls - Multi Level Security protection.
+SELINUXTYPE=targeted
+Save the change, and restart the system:
+
+# reboot
+
+$ getenforce
+Enforcing
+
+After changing to enforcing mode, SELinux may deny some actions because of incorrect or missing SELinux policy rules. 
+To view what actions SELinux denies, enter the following command as root:
+
+# ausearch -m AVC,USER_AVC,SELINUX_ERR,USER_SELINUX_ERR -ts today
+# grep "SELinux is preventing" /var/log/messages
+
+Alternatively, with the setroubleshoot-server package installed, enter:
+
+# dmesg | grep -i -e type=1300 -e type=1400
+
+
+If SELinux is active and the Audit daemon (auditd) is not running on your system, then search for certain SELinux messages in the output of the dmesg command:
+
+
+# dmesg | grep -i -e type=1300 -e type=1400
+
+
+
+- Enabling SELinux on systems that previously had it disabled
+
+** To avoid problems, such as systems unable to boot or process failures, follow this procedure when enabling SELinux on systems that previously had it disabled.
+
+# systemctl status selinux-autorelabel
+# systemctl enable selinux-autorelabel
+# systemctl start selinux-autorelabel
+
+
+
+Procedure
+
+Enable SELinux in permissive mode. For more information, see Changing to permissive mode.
+Restart your system:
+
+# reboot
+Check for SELinux denial messages.For more information, see Identifying SELinux denials.
+Ensure that files are relabeled upon the next reboot:
+
+# fixfiles -F onboot
+This creates the /.autorelabel file containing the -F option.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,408 @@
+Writing regular expressions:
+- Regular expressions are a language of their own, which means they have their own syntax and rules.
+- Used with tools like grep, vim, sed, awk.
+====================================================================================================
+# man 7 regex
+
+Within a bracket expression, the name of a character class enclosed in “[:” and “:]” stands for the list of all characters belonging to that class. Standard character class names are:
+
+[[:alnum:]] – Alphanumeric characters.
+[[:alpha:]] – Alphabetic characters
+[[:blank:]] – Blank characters: space and tab.
+[[:digit:]] – Digits: ‘0 1 2 3 4 5 6 7 8 9’.
+[[:lower:]] – Lower-case letters: ‘a b c d e f g h i j k l m n o p q r s t u v w x y z’.
+[[:space:]] – Space characters: tab, newline, vertical tab, form feed, carriage return, and space.
+[[:upper:]] – Upper-case letters: ‘A B C D E F G H I J K L M N O P Q R S T U V W X Y Z’.
+
+
+
+
+^w1
+w1|w2
+[^ ]
+foo
+bar
+[0-9]
+
+=====================================================
+Matching Text with grep:
+# grep Loaded velocity.log
+# grep ^Lo velocity.log
+# grep Loaded$ velocity.log 
+# grep ^Loaded$ velocity.log
+# grep L.d velocity.log
+# grep ^L.d$ velocity.log
+# grep L[od]d velocity.log
+# grep L*[od]*d velocity.log
+# grep ^L[od]aded$ velocity.log
+Next, search for a word named loaded in any case (i.e. case insensitive search):
+
+# grep -i -w loaded velocity.log
+
+Let us try to search two words true or false in any case:
+
+# grep -A3 -E -i -w 'true|false' velocity.log
+
+
+The PATTERN in last example, used as an extended regular expression. The following will match word Linux or UNIX in any case using the egrep command:
+
+# egrep -i '^(true|false)' velocity.log
+# grep -E -i '^(true|false)' velocity.log
+# grep -e true -e  false velocity.log
+# grep -r   false velocity.log
+# grep -rl   false velocity.log    (list the file names only)
+# grep -r  ^...$ velocity.log    
+# grep 'load..' velocity.log
+
+
+* -i    case insensitive
+* -v    reverse
+* -r    recursive
+* -n    number the lines
+* -A3   Display 3 lines after the regular expression match.
+* -B3   Display 3 lines before the regular expression match.
+* -e   Used for multiple search patterns.
+
+# ps aux | grep root
+# ps aux | grep ^root
+
+# grep 'true.\.' velocity.log
+
+
+You can search for blank lines with the following examples:
+# grep '^$' filename
+
+Find lines ending with word Stop:
+# grep 'Stop$' velocity.log
+
+Find lines ending with word 83.149.9.216:
+# grep '^83.149.9.216' velocity.log
+
+Match line only containing 83.149.9.216:
+# grep '^83.149.9.216$' access1.log
+
+
+The dot (.) matches any single character. You can match specific characters and character ranges using [..] syntax. Say you want to Match both Stop or Stop:
+grep '[sS]top' velocity.log
+OR
+grep '[sS][tT][oO][pP]' velocity.log
+
+
+Let us match digits and upper and lower case characters. For example, try to math words such as vivek1, Vivek2 and so on:
+grep -w '*[mM]ozilla/[0-9]*' velocity.log
+
+In this example match two numeric digits. In other words match foo11, foo12, foo22 and so on, enter:
+grep 'foo[0-9][0-9]' filename
+
+You are not limited to digits, you can match at least one letter:
+grep '[A-Za-z]' filename
+
+Display all the lines containing either a “w” or “n” character:
+grep [wn] filename
+
+In this example match all upper case letters:
+grep '[:upper:]' velocity.log
+
+
+Wildcards
+You can use the “.” for a single character match. In this example match all 3 character word starting with “b” and ending in “t”:
+
+grep '\<b.t\>' filename
+Where,
+
+\< Match the empty string at the beginning of word
+\> Match the empty string at the end of word.
+Print all lines with exactly two characters:
+grep '^..$' filename
+
+Display any lines starting with a dot and digit:
+grep '^\.[0-9]' filename
+
+Escaping the dot
+Say you just want to match an IP address 192.168.2.254 and nothing else. The following regex to find an IP address 192.168.1.254 will not work (remember the dot matches any single character?):
+grep '192.168.1.254' hosts
+
+Sample outputs:
+
+192.168.2.18        centos7
+192x168y2z18        centos7
+All three dots need to be escaped:
+
+192.168.2.18        centos7
+grep '192\.168\.1\.254' hosts
+
+The following example will only match an IP address:
+egrep '[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}' file
+
+
+
+
+Searches for all lines matching ‘--test--‘ using -e option Without -e, grep would attempt to parse ‘–test–‘ as a list of options. For example:
+grep -e '--test--' filename
+
+How Do I do OR with grep?
+Use the following syntax:
+grep -E 'word1|word2' filename
+### OR ###
+egrep 'word1|word2' filename
+
+OR Try the following syntax:
+grep 'word1\|word2' filename
+
+How do I AND with grep?
+Use the following syntax to display all lines that contain both ‘word1’ and ‘word2’
+grep 'word1' filename | grep 'word2'
+
+OR try the following syntax:
+grep 'foo.*bar\|word3.*word4' filename
+
+How Do I Test Sequence?
+You can test how often a character must be repeated in sequence using the following syntax:
+
+{N}
+{N,}
+{min,max}
+Match a character “v” two times:
+egrep "v{2}" filename
+
+The following will match both “col” and “cool” words:
+egrep 'co{1,2}l' filename
+
+Our next example will match any row of at least three letters ‘c’.
+egrep 'c{3,}' filename
+
+In this example, I will match mobile number which is in the following format 91-1234567890 (i.e TwoDigit-TenDigit)
+grep "[[:digit:]]\{2\}[ -]\?[[:digit:]]\{10\}" filename
+
+How Do I Highlight with grep?
+Pass the --color as follows:
+grep --color regex filename
+
+
+How Do I Show Only The Matches, Not The Lines?
+Use the following syntax:
+grep -o regex filename
+
+grep Regular Expression Operator
+I hope following table will help you quickly understand regular expressions in grep when using under Linux or Unix-like systems:
+Table 1: grep (egrep) regex operator
+Operator	Description	Examples
+.	Matches any single character.	
+grep '.' file
+grep 'foo.' input
+?	The preceding item is optional and will be matched, at most, once.	
+grep 'vivek?' /etc/passwd
+*	The preceding item will be matched zero or more times.	
+grep 'vivek*' /etc/passwd
++	The preceding item will be matched one or more times.	
+ls /var/log/ | grep -E "^[a-z]+\.log."
+{N}	The preceding item is matched exactly N times.	
+egrep '[0-9]{2} input
+{N,}	The preceding item is matched N or more times.	
+egrep '[0-9]{2,} input
+{N,M}	The preceding item is matched at least N times, but not more than M times.	
+egrep '[0-9]{2,4} input
+-	Represents the range if it’s not first or last in a list or the ending point of a range in a list.	
+grep ':/bin/[a-z]*' /etc/passwd
+^	Matches the empty string at the beginning of a line; also represents the characters not in the range of a list.	
+grep '^vivek' /etc/passwd
+grep '[^0-9]*' /etc/passwd
+$	Matches the empty string at the end of a line.	
+grep '^$' /etc/passwd
+\b	Matches the empty string at the edge of a word.	
+grep '\bvivek' /etc/passwd
+\B	Matches the empty string provided it’s not at the edge of a word.	
+grep '\B/bin/bash' /etc/passwd
+\<	Match the empty string at the beginning of word.	
+grep '\<vivek' /etc/passwd
+\>	Match the empty string at the end of word.
+
+Linux grep vs egrep command
+The egrep is the same as grep -E command. It interpret PATTERN as an extended regular expression. From the grep man page:
+
+       In basic regular expressions the meta-characters ?, +, {, |, (, and ) lose their special meaning; instead use the backslashed versions \?, \+, \{,
+       \|, \(, and \).
+
+       Traditional egrep did not support the { meta-character, and some egrep implementations support \{ instead, so portable scripts should avoid  {  in
+       grep -E patterns and should use [{] to match a literal {.
+
+       GNU grep -E attempts to support traditional usage by assuming that { is not special if it would be the start of an invalid interval specification.
+       For example, the command grep -E '{1' searches for the two-character string {1 instead of reporting a syntax  error  in  the  regular  expression.
+       POSIX.2 allows this behavior as an extension, but portable scripts should avoid it.
+Conclusion
+You learned how to regular expressions (regex) in grep running on Linux or Unix with various examples. See GNU/grep man page online here or see the following resources using the man command or info command (or pass the --help option:
+man egrep
+info egrep
+man 7 regex
+egrep --help
+
+The syntax is as follows:
+
+grep 'word' filename
+ 
+# Interpret PATTERNS as fixed strings, not regular expressions (regex) when fgrep used.
+grep -F 'word-to-search' file.txt
+grep -F 'pattern' filename
+ 
+grep 'word' file1 file2 file3
+grep 'string1 string2'  filename
+cat otherfile | grep 'something'
+command | grep 'something'
+command option1 | grep 'data'
+grep --color 'data' fileName
+grep [-options] pattern filename
+grep -F [-options] words file
+=====================================================================================================
+cut, tr, sed and awk:
+
+
+# cut -f 3 -d : /etc/passwd     (cut uses )
+
+
+
+
+    1  ping 8.8.8.8
+    2  ping www.google.com
+    3  clear
+    4  ls -al
+    5  cd Desktop/
+    6  ls -al
+    7  cd logs/
+    8  clear
+    9  ls -al
+   10  grep --help
+   11  clear
+   12  ls -al
+   13  grep -c HEAD access1.log 
+   14  grep -c GET access1.log 
+   15  grep -c get access1.log 
+   16  grep -i -c get access1.log 
+   17  grep - l GET
+   18  grep - l GET /
+   19  grep -l GET /
+   20  grep -l GET 
+   21  grep -l GET .
+   22  grep -l GET *
+   23  grep -l GET  access1.log velocity.log.txt 
+   24  grep -n GET  access1.log
+   25  grep -v GET  access1.log
+   26  grep "^64"  access1.log
+   27  grep -B2 "^64"  access1.log
+   28  grep -A 3 "^64"  access1.log
+   29  grep -C 3 "^64"  access1.log
+   30  grep -B 3 "^64"  access1.log
+   31  ls -al
+   32  grep stop$ velocity.log.txt 
+   33  grep "stop$" velocity.log.txt 
+   34  grep -i "stop$" velocity.log.txt 
+   35  grep -i "36\"$" velocity.log.txt 
+   36  grep -i '36"$' velocity.log.txt 
+   37  grep  '36"$' velocity.log.txt 
+   38  grep  '36\\"$' velocity.log.txt 
+   39  grep  '36\"$' velocity.log.txt 
+   40  grep  '36?$' velocity.log.txt 
+   41  grep  '36"$' velocity.log.txt 
+   42  grep  '36"$' access1.log 
+   43  grep  '^[0-9]' access1.log 
+   44  grep -o  '[0-9]' access1.log 
+   45  grep -o  'HEAD' access1.log 
+   46  echo " Hello in conderz" > test.exe
+   47  echo " Hello in conderz" > download.jpg
+   48  cat download.j
+   49  cat download.jpg 
+   50  file download.jpg 
+   51  file download.jfif 
+   52  echo "helo in coderz" >>  download.jfif 
+   53  file download.jfif 
+   54  cat download.jfif 
+   55  grep -o  'helo' download.jfif 
+   56  strings download.jfif |   grep -o  'helo'  
+   57  strings download.jfif 
+   58  strings download.jpg 
+   59  cd Desktop/
+   60  cd logs/
+   61  grep '^$' access1.log 
+   62  grep '^$' error.log.txt 
+   63  grep '^$' velocity.log.txt 
+   64  clear
+   65  grep 'http*' access1.log 
+   66  clear
+   67  grep -Eo '(http|https)://[^/"]+1'  access1.log 
+   68  grep -Eo '(http|https)://[^/"]+2'  access1.log 
+   69  grep -Eo '(http|https)://[^/"]'  access1.log 
+   70  grep -Eo '(http|https)://[/$"]'  access1.log 
+   71  grep -Eo '(http|https)://[/$"]+1'  access1.log 
+   72  grep -Eo '(http|https)://[/"]+1'  access1.log 
+   73  grep -Eo '(http|https)://[/]+1'  access1.log 
+   74  grep -Eo '(http|https)://[/]'  access1.log 
+   75  grep -Eo '(http|https)://[^/]+1'  access1.log 
+   76  grep -Eo '(http|https)://[^/]'  access1.log 
+   77  grep -Eo '(http|https)://[^/]+10'  access1.log 
+   78  grep -Eo '(http|https)://[^/]+2'  access1.log 
+   79  grep -Eo '(http|https)://[^/]+3'  access1.log 
+   80  grep -Eo '(http|https)://[^/]+4'  access1.log 
+   81  grep -Eo '(http|https)://[^/]+'  access1.log 
+   82  grep -Eo '(http|https)://[^/]+1'  access1.log 
+   83  grep -Eo '(http|https)://[^/]+4'  access1.log 
+   84  grep -Eo '(http|https)://[^/]+'  access1.log 
+   85  grep -Eo '(http|https)://[^/]+>'  access1.log 
+   86  grep -Eo '(http|https)://[^/]+/'  access1.log 
+   87  grep -Eo '(http|https)://[^/]+1'  access1.log 
+   88  grep -Eo '(http|https)://[^/]+/'  access1.log 
+   89  grep -E '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'  access1.log 
+   90  grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'  access1.log 
+   91  grep 'L..d' velocity.log.txt 
+   92  grep 'L+.d' velocity.log.txt 
+   93  grep 'L....d' velocity.log.txt 
+   94  grep '^L.d$' velocity.log.txt 
+   95  grep '^L..d$' velocity.log.txt 
+   96  grep '^L..d' velocity.log.txt 
+   97  grep '[^L..d]' velocity.log.txt 
+   98  grep '[^L.d]' velocity.log.txt 
+   99  clear
+  100  sed --help
+  101  clear
+  102  cp access1.log access12.log 
+  103  sed 's/http/https/'   access12.log 
+  104  sed 's/HTTP/https/'   access12.log 
+  105  sed 's/http/https/'   access12.log 
+  106  sed 's/HTTP/https/'   access12.log 
+  107  sed 's/http/https/'   access12.log 
+  108  sed 's/HTTP/https/'   access12.log 
+  109  sed 's/http/https/'   access12.log  > access123.log 
+  110  grep  http access123.log 
+  111  grep -w  http access123.log 
+  112  sed 's/http/https/'   access123.log 
+  113  clear
+  114  grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'  access1.log 
+  115  grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'  access1.log | sort
+  116  sort --hep
+  117  sort --help
+  118  clear
+  119  sort --help
+  120  clear
+  121  cut error.log.txt 
+  122  cut --help
+  123  cut -d ']' error.log.txt 
+  124* cut -
+  125  cut -b 1 -d ']' error.log.txt 
+  126  cut -b ] -d ']' error.log.txt 
+  127  cut -b ]  error.log.txt 
+  128  cut -b 1,2,3  error.log.txt 
+  129  cut -b {1,100} -d ]  error.log.txt 
+  130  cut   error.log.txt 
+  131  cut -b 1000   error.log.txt 
+  132  clear
+  133  cut -b 100   error.log.txt 
+  134  cut -b 10   error.log.txt 
+  135  clear
+  136  grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'  access1.log | sort | uniq
+  137  grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'  access1.log | sort | uniq -c
+  138  grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'  access1.log | sort | uniq -c 2
+  139* grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'  access1.log | sort | uniq 
+  140  grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'  access1.log | sort | uniq -c 
+  141  grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'  access1.log | sort | uniq -c  | sort
+  142  grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'  access1.log  | uniq -c  | sort
+  143  grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'  access1.log  | sort  | uniq -c  | sort
+  144  clear
+  145  history

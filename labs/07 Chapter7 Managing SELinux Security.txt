@@ -1,0 +1,76 @@
+Lab Prerequest:
+mount /dev/se0 /media
+mkdir /var/media
+cp -fr /media/* /var/media/
+
+
+vim /etc/yum.repos.d/local.repo
+[LocalRepo_BaseOS]
+name=LocalRepository_BaseOS
+baseurl=file:///var/media/BaseOS
+enabled=1
+gpgcheck=1
+gpgkey=file:///var/media/RPM-GPG-KEY-redhat-release
+
+
+[LocalRepo_AppStream]
+name=LocalRepository_AppStream
+baseurl=file:///var/media/AppStream
+enabled=1
+gpgcheck=1
+gpgkey=file:///var/media/RPM-GPG-KEY-redhat-release
+
+:wq
+yum install httpd
+yum install vsftpd
+
+
+
+
+Basic SELinux Security Concepts (Security Enhanced Linus):
+
+- There are two types of security, DAC (discretionary access control) and MAC (Mandetory access control)
+- A primary goal of SELinux is to protect user data from system services that have been compromised.
+- In SELinux, system is defined as subject (users,services) and object (files/folders,ports, sockets)
+- A context is a label on processes, files, and ports that determine access.
+- A Boolean is a switch that enables/disables as set of policy rules.
+- There is a policy rule that permits Apache (the web server process running as httpd_t) to access files and directories with a context normally
+    found in /var/www/html and other web server directories (httpd_sys_content_t).
+- There is no allow rule in the policy for files normally found in /tmp and /var/tmp, so access is not permitted.
+
+# id -z
+# ps auxz
+# ps aux -z
+# ls -z
+
+# netstat -z
+
+
+Ex:
+system_u:object_r:admin_home_t:s0
+system_u        ... User type
+object_r        ... Role Type
+admin_home_t    ... Type
+s0              ... mls(multi level security), mcs(multi category security)
+
+=============================================================================================
+SELinux Modes:
+Enforcing Mode: SELinux both logs and protects.
+Permissive Mode: USed to trouble shoot issues. SELinux only logs.
+Disabled Mode: Completely disables SELinux.
+-No rebbot is required to go from enforcing to permissive on back again.
+- A system reboot is required to disable SELinux entirely, or to get from disabled mode to enforcing or permissive mode.
+
+
+# getenforce 
+# sestatus
+# setenforce 0                      (Permissive Mode)
+# setenforce 1                      (enforcing mode)
+# vim /etc/selinux/config           (RHEL7 or obove)
+# vim /etc/sysconfig/selinux        (older versions)
+
+
+===================================================================================================
+Changing SELinux Context:
+    - The context of the parent directory is assigned to the newly created file.
+

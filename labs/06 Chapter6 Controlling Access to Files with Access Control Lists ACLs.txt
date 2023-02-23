@@ -1,0 +1,145 @@
+Users and Group Permissions:
+=============================================
+Special Permissions:
+- The setuid (or setgid) permission on an executable file means that the command will run as the user (or group) of the file, not as the user ran the command.
+     Permission                 Files                                              Directories
+    Set User ID    4 or s       ===> Run executable files as Owners                     ==> -
+    Set Group ID   2 or s       ===> Run executable files as group Owners               ===>Inherits group ownership to all  newly created items below 
+    Sticky bit     1 or t       ===> -                                                  ===>   Delete files only if the owner or owner of the parent directory 
+    ##################################################################################################################################################
+    **** Set User ID 
+    
+    #which passwd
+    #/usr/bin/passwd ====> use to change all users password
+    # ll /usr/bin/passwd
+    -rwsr-xr-x 1 root root 72424 Mar  3  2022 /usr/bin/passwd #(Red color)
+     s ==> means any user can run file using user permission
+    
+    view game.sh 
+    
+    
+    change game file permissions
+    # chmod 755 game.sh
+     if i need user run this file without sudo pemission we need
+
+     #chmod u+s game.sh
+
+     Numeric Special Permissions ==> 4 = Set User Id  2 = Set Group ID 1 = Sticky bit
+     to find file have set User ID Permissions ===> find / -perm /4000 2> /dev/null     
+  
+    ========================================================
+    Set Group ID 
+
+    tail /etc/group
+
+    chmod g+s  /home/mrajeh/datafiles
+    chown :admins /home/mrajeh/datafiles
+    ll -d /home/mrajeh/datafiles
+
+    Sticky bit applied on a temp files 
+       ll -d /tmp
+       drwxrwxrwt 17 root root 4096 Nov 11 23:55 /tmp
+
+     cd /home 
+     mkdir data
+     chmod 777 data
+     cd data
+     touch 1 2 3 
+     chmod 744 data/*
+
+     if user have permission on a directory by default have permission on all files and subdirectories
+     we can fix that using Sticky bit
+     chmod 1777 data
+     ll -d data/
+
+
+
+Access Control List:
+- ACL givs permissions to more than one user or group on a file or directory.
+- ACL sets default permissions for newly created files and directories.
+- The file system needs to be mounted with ACL support enabled. XFS file system have builtin ACL support. 
+    Ext4 file systems created on RHEL7 have the acl option enabled by default, but ext4 file system c reated in earlier versions of Red Hat Enterprise Linux may the acl options included 
+    with the mount request.
+
+
+# ls -l file.txt
++ (The "+" at the end of the 10-character permission string indicates that there are ACL settings associated with this file)
+
+[root]# getfacl /accounting
+getfacl: Removing leading '/' from absolute path names
+# file: accounting
+# owner: accounting
+# group: accounting
+user::rwx
+group::rwx
+other::---
+
+
+
+# getfacl file.txt
+#getfacl .              (display ACL settings on the working directory)
+================================================================================
+
+Setting an ACL
+
+
+The syntax for setting an ACL looks like this:
+
+setfacl [option] [action/specification] file
+
+
+The 'action' would be -m (modify) or -x (remove), and the specification would be the user or group followed by the 
+permissions we want to set. In this case, we would use the option -d (defaults). So, to set the default ACL for this directory, we would execute:
+
+
+
+[root]# setfacl -d -m accounting:rwx /accounting
+After which we can now see the default ACL info for that directory:
+
+[root]# getfacl /accounting
+[root]# getfacl: Removing leading '/' from absolute path names
+# file: accounting
+# owner: accounting
+# group: accounting
+user::rwx
+group::rwx
+other::---
+default:user::rwx
+default:user:accounting:rwx
+default:group::rwx
+default:mask::rwx
+default:other::---
+
+
+
+What if Fred creates a file in that directory?
+
+[fred]$ touch test
+[fred]$ ls -la
+drwxrwx---+  2 accounting accounting  18 Jan  8 17:51 .
+dr-xr-xr-x. 18 root  root  262 Jan  8 15:13 ..
+-rw-rw----+  1 fred  accounting  0 Jan  8 17:51 test
+[fred]$ getfacl test
+# file: test
+# owner: fred
+# group: accounting
+user::rw-
+user:accounting:rwx  #effective:rw-
+group::rwx  #effective:rw-
+
+
+[root@lab1 accounting]setfacl -m kenny:rwx /accounting
+[root]getfacl ./
+# file: .
+# owner: accounting
+# group: accounting
+user::rwx
+user:kenny:rwx
+
+
+# setfacl -m u:username:rw file.txt
+# setfacl -m o::rw file.txt
+# setfacl -m g:sales:rw dir1
+# setfacl -R -m  g:sales:rw dir1
+# setfacl -X u:username file.txt
+# setfacl -b file.txt

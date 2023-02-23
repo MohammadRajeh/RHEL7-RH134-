@@ -1,0 +1,26 @@
+Linux Process scheduling and multitasking:
+- The way Linux (and other operating system) can actually run more precesses is by employing a technique calles time-slicing 
+-The part of the linux kernrl taht performs this switching is called the process scheduler.
+- three are exactly different levels of niceness   aa  process  can have (-20  to 19).
+- By default, processes will inherit their nice level from their parent, which is usually 0.
+- Only root is allowed to set negative nice levels and lower the nice level on existing processes.
+- Un privileged users are only allowed to set positive nice levels, and they are only allowed to raise the nice level on their existing process, but cannot lower them.
+
+# gnome-system-monitor
+===============================================================================
+Managing Process Proiorities:
+- Processes are scheduled according to proiority.
+- negative values are allowed only to root.
+- When a process is started, it will inherit the nice level from list parent.
+
+# ps l     (to show nice values)
+# ps axo user,pid,nice,command 
+# ps axo user,pid,command,nice --sort=nice
+# ps axo user,pid,command,nice --sort=user
+
+
+- The nice command is used to start a process with a user defined priority.
+# nioce vim text &         (Default is 10)
+[1] 9182
+# nice -n 15 vim text &
+# ps axo user,pid,command,nice  | grep firefox
