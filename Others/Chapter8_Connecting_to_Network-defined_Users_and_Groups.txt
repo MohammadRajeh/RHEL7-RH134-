@@ -1,0 +1,106 @@
+#Setting LDAP server using open IPA:
+- LDAP(Lightweight Directory Access Protocol) server is used as a centralized authentication server.
+- LDAP is also used to store accounts, permissions, ACL, quota and more.
+- Kerberos provides SSO authentication services using TGT (Ticket Granting Ticket)
+
+[root@master ~]# setenforce 0
+[root@master ~]# vim /etc/sysconfig/selinux 
+SELINUX=permissive
+[root@master ~]# systemctl stop  firewalld
+[root@master ~]# systemctl disable  firewalld
+[root@master ~]# vim /etc/hosts
+192.168.1.100   master.redhat.com       master
+[root@master ~]# yum -y install ipa-server bind-dyndb-ldap ipa-server-dns
+[root@master ~]# ipa-server-install --setup-dns
+[root@master ~]# authconfig --enablemkhomedir --update
+[root@master ~]# systemctl enable sssd
+[root@master ~]# systemctl start sssd
+[root@master ~]# kinit admin          (test kerberos admin)
+
+- Now to add users to LDAP:
+[root@master ~]# ipa user-add
+[root@master ~]# ls
+cacert.p12                (this is not the certificate you will need in user authentiction)
+
+[root@master ~]# cd /etc/ipa/
+ca.crt                    (this is the certificate you will need in user authentiction)
+[root@master ~]# klist    (to show kerberos credentials)
+
+
+Hint:
+[root@master ipa]# cat /etc/resolv.conf 
+nameserver 127.0.0.1                      (since RHEL7.2)
+
+firefox> http://localhost
+
+[root@master ~]# ipactl status
+
+- To install the certificate:
+[root@master ~]# mkdir /var/www/html/pub
+[root@master ~]# cp /etc/ipa/ca.crt /var/www/html/pub/
+===============================================================
+For clinet:
+[root@client ~]# yum -y install authconfig-gtk sssd krb5-workstation
+sssd (system security service daemon)
+[root@client ~]# authconfig                       (CLI tool)
+[root@client ~]# authconfig-tui                   (TUI tool)
+[root@client ~]# authconfig-gtk                   (GUI tool)
+[root@client ~]# system-config-authentication     (GUI tool)
+Applications> Sundry > authentication
+
+[root@client ~]# vim /etc/nslcd.conf            (all info we provided using the authconfig-gtk tool)
+[root@client ~]# cd /etc/openldap/carcerts      (path of the certificate)
+===============================================================
+Using a public LDAP server over the internet:
+
+[root@client ~]# yum -y install authconfig-gtk sssd krb5-workstation
+[root@client ~]# authconfig-gtk
+User Account Database: LDAP
+LDAP Search Base DN: dc=rhcertification,dc=com
+LDAP Server: server.rhcertification.com
+Use TLS to encrypt connections:
+Certificate URL: ftp://server.rhcertification.com/pub/slapd.pem
+Authentication Method: LDAP password
+===============================================================
+Sharing home directory using samba autofs:
+[root@client ~]# yum -y install autofs
+[root@client ~]# vim /etc/auto.master
+/home/guests    /etc/auto.guests
+
+[root@client ~]# vim /etc/auto.guests
+*	-fstype=cifs,username=ldapusers,password=password ://master.redhat.com/data/&
+
+[root@master ~]# vim /etc/samba/smb.conf 
+[data]
+comment = LDAP user  home directories
+path = /home/guests
+public = yes
+writable = no
+===============================================================
+Sharing home directory using nfs autofs:
+[root@master ~]# yum install -y nfs-utils
+[root@master ~]# vim /etc/exports
+/data   -rw     *(rw,no_root_squash)
+
+[root@master ~]# systemctl start nfs
+[root@client ~]# showmount -e  192.168.1.100
+[root@client ~]# vim /etc/auto.master
+/nfsserver      /etc/auto.nfsserver
+
+[root@client ~]# vim /etc/auto.nfsserver
+mydata  -rw     192.168.1.100:/data
+
+[root@client ~]# systemctl restart autofs
+[root@client ~]# cd /nfsserver/
+[root@client nfsserver]# cd mydata
+
+- NFS can't be used over the internet but locally only.
+===============================================================
+Joining a system to Active Directory:
+[root@client ~]# yum install -y realmd
+[root@client ~]# realm discover server.ecst.com
+[root@client ~]# realm join server.ecst.com        (using administrator account)
+[root@client ~]# realm join --user mohd server.ecst.com        (using mohd account)
+[root@client ~]# realm permit --realm server.ecst.com --all    (to enable logins using AD)
+[root@client ~]# realm permit --realm server.ecst.com server\\mohd  (to only allow login for user                                                                           mohd using A)
+===============================================================

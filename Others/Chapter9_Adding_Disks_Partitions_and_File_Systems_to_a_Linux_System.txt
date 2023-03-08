@@ -1,0 +1,74 @@
+MBR vs GPT:
+- MBR supports a maximum of four primary partitions (max of 63 logical patitions), with a total size of the hard disk of 2Tbyte (2^31 byte)
+- GPT supports a maximum of 128 partitions, with a total size of the hard disk of (2^72 byte)
+-MBR is 512 byte .64 byte partition table
+                 .446 byte boot loader
+                 .2 byte magic number
+==========================================
+Managing MBR partitions with fdisk:
+[root@master ~]# fdisk -l
+[root@master ~]# fdisk /dev/sdb
+m: for help
+l: list known partition types
+o: create a new empty DOS partition table
+n: add a new partition
+p: print the partition table
+d: delete a partition
+w: write table to disk and exit
+
+- If the newly created partition should have a type other than Linux, enter the t command to change a partition's type.
+
+[root@master ~]# fdisk -l /dev/sdb
+[root@master ~]# partprobe /dev/sdb            (or reload the system)
+[root@master ~]# mkfs.ext4 /dev/sdb1
+[root@master ~]# mkdir /mydata
+[root@master ~]# mount /dev/sdb1 /mydata/
+[root@master ~]# df -h
+[root@master ~]# df -hT              (show the file system used)
+[root@master ~]# mount | grep sdb    (show all mounted systems) 
+- The file system can be mounted using more than one directory.
+[root@master ~]# umount /mydata/       OR  [root@master ~]# umount /dev/sdb1
+[root@master ~]# vim /etc/fstab 
+/dev/sdb1       /mydata         ext4    defaults        0 0
+
+[root@master ~]# mount -a         (re-read the fstab file)
+[root@master ~]# e2label /dev/sdb1 data
+[root@master ~]# e2label /dev/sdb1 
+[root@master ~]# blkid 
+[root@master ~]# blkid /dev/sdb1
+[root@master ~]# vim /etc/fstab 
+LABEL=data       /mydata         ext4    defaults        0 0
+
+[root@master ~]# vim /etc/fstab 
+UUID=2cc90e10-8a48-4cbe-8b8b-dd1097ed0ae9   /mydata         ext4    defaults        0 0
+
+Hint)
+[root@master ~]# dd if=/dev/random of=/dev/sdb bs=1M count=512    (to delete the MBR of the hard disk)
+
+- If no type is specified with mkfs command, (ext2) file system will be used.
+==========================================
+Managing GPT partitions with gdisk:
+[root@master ~]# gdisk /dev/sdb
+==========================================
+Swap:
+[root@master ~]# mkswap /dev/sdb1
+[root@master ~]# swapon /dev/sdb1
+[root@master ~]# swapon -a             (activate all swap spaces listed in the /etc/fstab file)                 
+[root@master ~]# free -m               (show the swap file system)
+[root@master ~]# swapon -s             (show the swap file system)
+[root@master ~]# vim /etc/fstab 
+/dev/sdb2       swap         ext4    defaults        0 0
+[root@master ~]# swapoff /dev/sdb1
+
+- A file can be used as a swap file:
+[root@master ~]# dd if=/dev/random of=/swap_file bs=1M count=1024
+[root@master ~]# mkswap /swap_file
+[root@master ~]# swapon /swap_file
+
+- Before moving the swap file to another location, swapoff must be run.
+- If data cannot be written to other places, the swapoff will fail, with an error, and the swap space will stay active.
+- By default, swap spaces are used in series, meaning that the first activated swap space will be used until it is full, then the kernel will start using the second swap space. Swap space priorities are displayed with swapon - s, and can be set with the pri= mount option. If swap spaces have the same priority, the kernel will write to them round-robin instead of writing to a single swap space until it is at capacity.
+==========================================
+
+ 
+

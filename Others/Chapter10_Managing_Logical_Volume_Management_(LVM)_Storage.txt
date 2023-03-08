@@ -1,0 +1,73 @@
+Logical volume management (LVM):
+- Volumes can consist of more than one disk.
+- Easy resize operation.
+- Easy replacement of failing disks.
+- Advanced options such a working with snapshots, which allows you to create backups even if they are open.
+- Easy to add new volumes.
+- Easy to add many volumes.
+- Upto 256 logical volume.
+
+steps:
+1- Partition physical storage
+2- Create physical volume (PV)   (LVM automatically segments PVs into physical extents (PE))
+3- Create volume group(VG)       (PV can only be allocated to a single VG)
+4- Create logical volume (LV)
+- Mirroring causes each Logical Extent to map to two Physical Extents.
+[root@master ~]# pvcreate /dev/sdb1 /dev/sdc1 /dev/sdd1   (label the partition for use with LVM)
+[root@master ~]# pvdisplay 
+[root@master ~]# pvdisplay /dev/sdb1
+[root@master ~]# pvs
+[root@master ~]# vgcreate VG1 /dev/sdb /dev/sdc1 /dev/sdd1
+[root@master ~]# vgdisplay 
+[root@master ~]# vgdisplay VG1 
+[root@master ~]# vgs
+[root@master ~]# lvcreate -n LV1 -L 2G VG1
+[root@master ~]# lvdisplay 
+[root@master ~]# lvdisplay /dev/VG1/LV1
+[root@master ~]# lvs
+[root@master ~]# mkfs.xfs /dev/VG1/LV1
+[root@master ~]# mkdir data
+[root@master ~]# mount /dev/VG1/LV1 data
+[root@master ~]# df -h
+
+- Removing a logical volume will destroy any data stored on the logical volume.
+[root@master ~]# lvremove /dev/VG1/LV1    (file system must be unmounted first)
+[root@master ~]# vgremove VG1
+[root@master ~]# pvremove /dev/sdb1 /dev/sdc1 /dev/sdd1
+===========================================================
+Extending Logical Volumes (no down time):
+
+[root@master ~]# pvcreate /dev/sde1
+[root@master ~]# vgextend VG1 /dev/sde1
+[root@master ~]# lvextend -L +3G /dev/VG1/LV1 
+[root@master ~]# xfs_growfs /dev/VG1/LV1           (update the file system for XFS file systems)
+[root@master ~]# resize2fs /dev/VG1/LV1            (update the file system for other file systems)
+
+Or:
+[root@master ~]# lvextend -r -L +3G /dev/VG1/LV1   (extend and update in one step)
+===========================================================
+Shrinking a volume group:
+- XFS doesn't support shrinking.
+[root@master ~]# umount data
+[root@master ~]# resize2fs /dev/VG1/LV1 100M
+[root@master ~]# e2fsck -f /dev/VG1/LV1
+[root@master ~]# lvreduce --size -3G /dev/VG1/LV1 
+[root@master ~]# lvreduce --size -r -3G /dev/VG1/LV1 
+[root@master ~]# vgreduce VG1 /dev/sde1          (removes sde1 from VG1)
+[root@master ~]# mount /dev/VG1/LV1  data
+===========================================================
+Device mapper:
+- The kernel uses the mapper to connect to storage devices such as LVM, RAID, LUCKS. 
+[root@master ~]# ll /dev/dm-0 
+[root@master ~]# ll /dev/mapper/VG1-LV1
+[root@master ~]# ll /dev/VG1/LV1
+===========================================================
+Create a LVM snapshot:
+1- Check data on LVM volume.
+2- Take a snapshoot.
+[root@master ~]# lvcreate --size 100m --snapshot --name snap /dev/VG1/LV2
+3- Mount sanpshoot.
+4- Unmount LVM.
+5- Check data.
+===========================================================
+ 

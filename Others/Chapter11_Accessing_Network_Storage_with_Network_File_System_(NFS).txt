@@ -1,0 +1,70 @@
+Network File System:
+- RHEL7 supports NFSv4 by default, and falls back automatically to NFSv3 and NFSv2 if that is not available.
+- NFSv4 uses the TCP protocol to communicate with the server, while older versions of NFS may use either TCP or UDP. 
+- NFS requires rpcbind, which dynamically assigns ports for RPC services and can cause problems for configuring firewall rules. To allow clients to access NFS shares behind a firewall, edit the /etc/sysconfig/nfs configuration file to control which ports the required RPC services run on. 
+( Allow TCP and UDP port 2049 for NFS and allow TCP and UDP port 111 (rpcbind/sunrpc)). 
+- NFS doesn't support user authentication.
+- All users can see the exported directories even if they don't have access.
+
+[root@master ~]# yum install -y nfs-utils
+[root@master ~]# systemctl start nfs-server             (nfs in previous distributions)
+[root@master ~]# systemctl enable nfs-server      
+[root@master ~]# systemctl stop firewalld
+[root@master ~]# vim /etc/exports
+/data           192.168.1.0/24(ro)
+/data		192.168.1.101(rw)
+/data		ecst.com(rw)
+/data		pc.ecst.com(ro)
+/data		192.168.1.0/24(ro)	192.168.2.0/24(rw)
+
+- Options can be ro, rw, sync, root_squash and no_root_squash
+
+[root@master ~]# systemctl restart nfs-server        (terminates all open sessions)
+[root@master ~]# exportfs -r                         (re-read the config file without termination of                                                         open sessions)
+[root@master ~]# exportfs -f                         (force re-read the config file)
+
+[root@client ~]# showmount -e 192.168.1.100
+[root@client ~]# mount 192.168.1.100:/data /root/data
+[root@client ~]# df -hT                             (nfs4)
+[root@client ~]# vim /etc/fstab 
+192.168.1.100:/data     /root/data      nfs     _netdev         0       0
+or)
+192.168.1.100:/data	/root/data	nfs	defaults,timeout=3	0	0
+==========================================================================
+The root squash:
+
+[root@master ~]# vim /etc/passwd
+nfsnobody:x:65534:65534:Anonymous NFS User:/var/lib/nfs:/sbin/nologin
+
+[root@master ~]# vim /etc/exports
+/data           192.168.1.0/24(rw,no_root_squash)
+
+[root@client data]# chmod a=rw file1               (will be permitted)
+==========================================================================
+To give write permissoions to the users:
+[root@master ~]# chmod o+w /data/
+[root@client ~]# cd data/
+[root@client data]# touch file5
+==========================================================================
+Autofs:
+The automounter is a service (autofs} that can automatically mount NFS shares "on demand," and will automatically unmount NFS shares when they are no longer being used.
+
+[root@client ~]# yum install -y autofs
+[root@client ~]# systemctl start autofs
+[root@client ~]# systemctl enable autofs
+[root@client ~]# vim /etc/auto.master
+/root/data      /etc/auto.data
+
+[root@client ~]# vim /etc/auto.data
+pub    -rw     192.168.1.100:/data
+where pub is the target directory we want to access.
+
+[root@client ~]# systemctl restart autofs
+[root@client ~]# cd data/pub
+[root@client ~]# df -hT
+192.168.1.100:/data nfs4       10G   32M   10G   1% /root/data/pub
+
+[root@client ~]# vim /etc/autofs.conf 
+timeout = 300                       (the idle user will be disconnected after 5 min by default)
+==========================================================================
+ 

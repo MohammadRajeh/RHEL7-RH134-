@@ -1,0 +1,19 @@
+Access control list:
+- ACL gives permissions to more than one user or group on a file or a directory.
+- ACL sets default permissions for newly created files and directories.
+- The file system needs to be mounted with ACL support enabled. XFS file systems have builtin ACL support. Ext4 file systems created on RHEL7 have the acl option enabled by default, but ext4 file systems c reated i n ea rlier versions of Red Hat Enterprise Linux may need the acl option included with the mount request. 
+
+[root@master ~]# ls -l file.txt
++  (The "+" at the end of the 10-character permission string indicates that there are ACL settings
+associated with this file)
+
+[root@master ~]# getfacl file.txt
+[root@master ~]# getfacl .                 (display ACL settings on the working directory)
+ 
+[root@master ~]# setfacl -m u:mohd:rw file.txt
+[root@master ~]# setfacl -m o::rw file.txt
+[root@master ~]# setfacl -m g:sales:rw dir1
+[root@master ~]# setfacl -R -m g:sales:rw dir1
+[root@master ~]# setfacl -x u:mohd file.txt
+[root@master ~]# setfacl -b file.txt           (roll back to the default ACL)
+ 

@@ -1,0 +1,48 @@
+Writing regular expressions:
+- Regular expressions are a language of their own, which means they have their own syntax and rules.
+- Used with tools like grep, vim, sed, awk.
+[root@master ~]# man 7 regex
+===================================================
+Matching Text with grep:
+[root@master ~]# grep cat /usr/share/dict/words 
+[root@master ~]# grep ^cat /usr/share/dict/words 
+[root@master ~]# grep cat$ /usr/share/dict/words 
+[root@master ~]# grep ^cat$ /usr/share/dict/words 
+[root@master ~]# grep c.t /usr/share/dict/words      
+[root@master ~]# grep ^c.t$ /usr/share/dict/words 
+[root@master ~]# grep c[aou]t /usr/share/dict/words 
+[root@master ~]# grep ^c[aou]t$ /usr/share/dict/words 
+[root@master ~]# grep -e cat -e tele /usr/share/dict/words 
+[root@master ~]# grep -r mohd /etc
+[root@master ~]# grep -rl mohd /etc          (list the file names only)
+[root@master ~]# grep -r ^...$ /etc/
+
+. -i   case insensitive
+. -v   reverse
+. -r   recursive
+. -n   number the lines
+. -A3  DIsplay 3 lines after the regular expression match.
+. -B3  DIsplay 3 lines before the regular expression match.
+. -e   Used for multiple search patterns
+[root@master ~]# ps aux | grep root
+[root@master ~]# ps aux | grep ^root
+===================================================
+cut, tr, sed and awk:
+[root@master ~]# cut -f 3 -d : /etc/passwd      (cut uses the tab as a delemiter by default)
+[root@master ~]# cut -f 1 -d : /etc/passwd | sort
+[root@master ~]# cut -f 1 -d : /etc/passwd | sort | less
+
+[root@master ~]# echo hello world | tr a-z A-Z
+[root@master ~]# echo hello world | tr [a-z] [A-Z]
+[root@master ~]# echo hello world | tr [:lower:] [:upper:]
+
+[root@master ~]# sed 2q /etc/passwd               (head -n 2 /etc/passwd)
+[root@master ~]# sed -n /^root/p /etc/passwd      (grep ^root /etc/passwd)
+[root@master ~]# sed -n 5p /etc/passwd
+[root@master ~]# sed -i 's/mohd/MOHD/g' file    (substitute mohd with MOHD globally)
+
+[root@master ~]# ps aux | grep root | awk '{ print $2 }'    (used like cut)
+
+[root@master ~]# head /etc/passwd | tail -1 
+===================================================
+ 

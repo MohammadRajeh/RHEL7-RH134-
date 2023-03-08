@@ -1,0 +1,51 @@
+Netfilter and firewalld concepts:
+- The Linux kernel includes netfilter, which allows kernel modules to inspect every packet traversing the system.
+- Tools like iptables, ip6tables, ebtables and firewalld are used to manage netfilter.
+- Firewalld both covers IPv4 and IPv6 settings (new in RHEL7).
+- Firewalld classfies the network into zones (private, public, DMZ) and each zone includes interfaces.
+- The default zone is set to public and interfaces are assigned to public if no changes are made. The lo interface is treated as if it were in the trusted zone.
+==============================================
+firewalld config:
+[root@master ~]# yum install firewall-config
+Or)
+Applications> sundry> firewall
+[root@master ~]# systemctl status firewalld
+[root@master ~]# firewall-config                 (GUI tool to manage firewalld)
+[root@master ~]# firewall-cmd --get-zones        (list all zones)
+[root@master ~]# firewall-cmd --get-services     (list all services)
+[root@master ~]# firewall-cmd --get-default-zone 
+[root@master ~]# firewall-cmd --set-default-zone=home
+[root@master ~]# ls /usr/lib/firewalld/services/       (default system services)
+[root@master ~]# firewall-cmd --zone=public --add-service=high-availability       (volatile)
+[root@master ~]# firewall-cmd --permanent --zone=public --add-service=high-availability    (permanent)
+[root@master ~]# firewall-cmd --list-all         (to verify)
+
+- If not configured, the default zone will be used.
+==============================================
+Examples:
+- zone:DMZ , allow SSH, NTP, FTP, VNC, apache and DNS
+
+[root@master ~]# firewall-cmd --get-default-zone 
+[root@master ~]# firewall-cmd --set-default-zone=dmz
+[root@master ~]# firewall-cmd --get-services 
+[root@master ~]# firewall-cmd --permanent --add-service=ssh
+[root@master ~]# firewall-cmd --permanent --add-service=ntp
+[root@master ~]# firewall-cmd --permanent --add-service=ftp
+[root@master ~]# firewall-cmd --permanent --add-service=vnc-server
+[root@master ~]# firewall-cmd --permanent --add-service=http
+[root@master ~]# firewall-cmd --permanent --add-service=dns
+
+Or:
+[root@master ~]# firewall-cmd --permanent --add-port=ssh/tcp
+[root@master ~]# firewall-cmd --list-all       
+- Any changes made in the Permanent configuration will not become active until the next time that the firewalld service unit is restarted or rloaded. Likewise, any changes made in the Runtime configuration will not survive a reload or restart of the firewalld service.
+[root@master ~]# systemctl restart firewalld
+Or)
+[root@master ~]# firewall-cmd --reload 
+==============================================
+Remove a service or a port:
+[root@master ~]# firewall-cmd  --remove-service=dns
+[root@master ~]# firewall-cmd --permanent --remove-service=dns
+[root@master ~]# firewall-cmd --remove-port=22/tcp
+[root@master ~]# firewall-cmd --permanent --remove-port=22/tcp
+==============================================

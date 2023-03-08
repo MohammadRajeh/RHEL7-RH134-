@@ -1,0 +1,127 @@
+vim editor (visual interface):
+- vim is backward-compatible with vi.
+- vim editor provides syntax highlighting, completion modes, spell-checking, scripting in multiple languages, file-type plug-ins, and many other options.
+- When an unprivileged user invokes the command vi on a RHEL7 machine, the command that is executed will be vim. This is done with an alias that is set from /etc/profile.d/vim.sh when the shell starts.
+This alias is not set for users with a UID less than or equal to 200. These users will execute vi, which is vim in vi compatible mode. This means that any features not found in classic vi will be disabled. 
+================================================
+Different versions of vim:
+• vim-minimal: This package only provides vi and included in a minimal installation of RHEL7.
+• vim-enhanced: This package provides the vim command.
+• vim-Xll: This package provides gvim (graphical vim).
+================================================
+vim modes:
+• Command mode: used for cut, paste, Undo, redo, and others.
+• Insert mode:  used for normal text editing. 
+• Ex mode:      used to save, quit, open files, search & replace and other more complex operations. 
+================================================
+Editing text:
+i.... Switch to insert mode, and start inserting before the current cursor position (insert).
+a.... Switch to insert mode, and start inserting after the current cursor position (append).
+I.... Move the cursor to the start of the current line and switch to insert mode.
+A.... Move the cursor to the end of the current line and switch to insert mode.
+R.... Switch to replace mode, starting at the character under your cursor. In replace mode, text is not inserted, but each character you enter replaces a character in the current document.
+o.... Open a new line below the current one, and switch to insert mode.
+O.... Open a new line above the current one, and switch to insert mode.
+:10.... Go to line 10
+================================================
+Move the cursor (in command mode):
+h.... Cursor left one position
+l.... Cursor right one position
+j.... Cursor down one line
+k.... Cursor up one line
+12j...Move the cursor 12 lines down.
+$.... Move to the end of the current line.
+gg... Move to the first line of the document.
+G.... Move to the last line of the document.
+w.... Move cursor to beginning of next word.
+5w... Move the cursor five words.
+b.... Move cursor to beginning of previous word.
+(.... Move cursor to beginning of current or previous sentence.
+).... Move cursor to beginning of next sentence.
+{.... Move to beginning of current/previous paragraph.
+}.... Move cursor to beginning of next paragraph.
+================================================
+Saving files (in Ex mode):
+:wq    Save anb quit the current file.
+:x     Save the current file if there are unsaved changes, then quit.
+:w     Save the current file and remain in editor.
+:w <filename>   Save the current file under a different file name.
+:q     Quit the current file (only if there are no un saved changes).
+:q!    Quit the current file, ignoring any un saved changes.
+ZZ     In command mode, saves the current file if there are unsaved changes, then quit.
+================================================
+Getting help:
+[root@master ~]# vimtutor 
+Or)
+:help
+:help save 
+:q
+================================================
+Replacing or deleting text:
+cw... Replaces one word.
+3cw... Replaces three words.
+c$ OR C OR cc... Replaces to the end of the line.
+3cc... Replaces the next 3 lines.
+r... Replaces a character.
+x... Delete one character.
+J... join two lines together.
+~... Changes the case of the character under the cursor.
+D... delete from the cursor to the end of the line.
+:1,5d... Deletes 5 lines.
+:.,+5d.. Deletes 5 lines begining from the cursor.
+:.,-5d.. Deletes 5 lines up from the cursor.
+:.,$d... Deletes from the cursor to the end of the file.
+================================================
+Copy and paste:
+yw.... Copy a word.
+yl.... Copy a letter.
+5yaw.... Copy the current word and the next four words.
+yy.... Copy a line.
+3yy.... Copy three lines.
+p.... Paste after the current cursor.
+P.... Paste before the current cursor.
+================================================
+Visual mode:
+character-based (started with v).
+line-based (started with V).
+Block-based (started with Ctrl+V).
+================================================
+Searching:
+/... to search forward
+?...to search backward
+n... find the next match
+N... find the previous match
+================================================
+Search and Replace (in Ex mode):
+:1,6s/old/new      (substitutes from line 1 to 6)
+:%s/old/new        (substitutes the entire file)
+:%s/old/new/i      (case insensitive)
+:r file_name        (copy the content of that file to the file being edited with vim)
+================================================
+Undo and redo (in command mode):
+u.... undo
+(.).... redo
+ctrl+r.... redo
+================================================
+vi Options:
+:set number          Enables line numbers.
+:set nu              Enables line numbers.
+:set nonu            Turn line numbers off.
+:set nonumber        Turn line numbers off.
+:set showmode        Show the current mode of operation (default on).
+:set noshowmode      Hide the mode of operation.
+:set tabstop=4       Set tab to 4 character jumps.
+:set ts=4            Set tab to 4 character jumps.
+:set ignorecase      Ignore case-sensitive.
+:set ic              Ignore case-sensitive.
+:set noic            Case-sensitive.
+:set hlsearch        Set highlighting of search results on.
+:set nohlsearch      Set highlighting of search results off.
+
+- To make this options available to all vi sessions, put it into a .exrc or .vimrc file in your HOME-directory.
+================================================
+Execute a command in vim:
+:.!date              (the current cursor position)
+:3!date              (in the third line)
+================================================
+ 

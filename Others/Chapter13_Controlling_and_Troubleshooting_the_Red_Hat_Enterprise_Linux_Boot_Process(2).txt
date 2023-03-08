@@ -1,0 +1,79 @@
+Boot process:
+1- POST is run using UEFI or BIOS.
+2- The system firmware searches for a bootable device, by searching for a Master Boot Record (MBR).
+3- The system firmware reads a boot loader from disk (Grub2).
+4- The boot loader loads its configuration from disk, and presents the user with a menu of possible configurations to boot.
+5- The boot loader loads the configured kernel and initramfs from disk and places them in memory.
+
+
+[root@master ~]# vim /etc/default/grub 
+[root@master ~]# grub2-mkconfig                (compiling the grub after editing the file)
+[root@master ~]# ls /usr/lib/systemd/system/    (default scripts. Don't touch it)
+[root@master ~]# cd /etc/systemd/system/        (put your script here)
+=======================================================
+Selecting a Boot Target:
+1- shutdown.target 
+2- multi-user.target         (multiple users, text-based logins only)
+3- graphical.target          (multiple users, graphical and text-based logins)
+4- reboot.target
+5- rescue.target
+6- emergency.target          (the root file system mounted read-only)
+7- and more...
+
+[root@master ~]# systemctl get-default 
+[root@master ~]# systemctl set-default graphical.target
+[root@master ~]# systemctl set-default multi-user.target 
+[root@master ~]# systemctl set-default rescue.target
+[root@master ~]# systemctl default
+=======================================================
+Boot,reboot, and shutdown:
+[root@master ~]# systemctl poweroff 
+[root@master ~]# poweroff 
+[root@master ~]# systemctl reboot 
+[root@master ~]# reboot 
+=======================================================
+Selecting a different target at boot time:
+1. (Re)boot the system.
+2. Interrupt the boot loader menu countdown by pressing any key.
+3. Press e to edit the current entry.
+4. Move the cursor to the line that starts with linux16. 
+5. Append systemd.unit=desired.target.
+6. Press Ctrl+x to boot with these changes.
+=======================================================
+Password Recovery:
+1. Reboot the system.
+2. Interrupt the boot loader countdown by pressing any key.
+3. Press e to edit the selected entry.
+4. Move the cursor to the kernel command line (the line that starts with linux16).
+5. Append rd.break (this will break just before control is handed from the init ramfs to the actual system).
+6. Press Ctrl+x to boot with the changes.
+7. mount -o remount,rw /sysroot
+8. chroot /sysroot
+9. passwd root
+10. touch /.autorelabel
+11. Ctrl+D
+12. Ctrl+D
+=======================================================
+Repairing File System Issues at Boot (for example LUKS issues):
+1. (Re)boot the system.
+2. Interrupt the boot loader menu countdown by pressing any key.
+3. Press e to edit the current entry.
+4. Move the cursor to the line that starts with linux16. 
+5. Append systemd.unit=emergency.target
+6. [root@master ~]# mount -o remount,rw /
+7. Edit /etc/fstab file.
+8. Edit /etc/cryptotab file.         (in case of LUKS file system)
+=======================================================
+Repairing Boot Loader Issues (grub2):
+- Grand Unified BootLoader.
+1. Boot from the CD drive.
+2. type <linux rescue>
+3. #df -h
+4. #chroot /mnt/sysimage
+5. #grub2-install /dev/sda
+=======================================================
+Securing GRUB2 with a password:
+[root@master ~]# grub2-setpassword 
+=======================================================
+
+

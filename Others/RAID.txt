@@ -1,0 +1,46 @@
+Redundant Array Of Independent Disks:
+1- RAID-0 (stripping)     no fault-tolerance
+2- RAID-1 (mirror)        fault-tolerance
+3- RAID-5                 fault-tolerance
+[root@master ~]# mdadm --create /dev/md0 --level=5 --raid=3 /dev/sdb1 /dev/sdc1 /dev/sde1
+[root@master ~]# mdadm --detail /dev/md0
+[root@master ~]# watch cat /proc/mdstat
+[root@master ~]# mkfs.ext4 /dev/md0
+[root@master ~]# mount /dev/md0 /data
+[root@master ~]# mdadm /dev/md0 -f /dev/sdc1          (mark a partition as fail)
+[root@master ~]# mdadm /dev/md0 -r /dev/sdc1          (remove a partition from RAID)
+[root@master ~]# mdadm /dev/md0 -a /dev/sde1          (add another partition to the RAID)
+[root@master ~]# mdadm --stop /dev/md0                (stop RAID)
+[root@master ~]# mdadm -A --scan                      (scan RAID partitions and start them)
+[root@master ~]# cat /proc/partitions 
+==========================================================
+Create encrypted partition:
+[root@master ~]# cryptsetup luksFormat /dev/md0        (enable encryption)
+[root@master ~]# cryptsetup luksOpen /dev/md0 secret   (to be able to mount the file system)
+[root@master ~]# ls /dev/mapper/secret 
+[root@master ~]# mkfs.ext4 /dev/mapper/secret 
+[root@master ~]# mount /dev/mapper/secret /data
+[root@master ~]# umount /data/
+[root@master ~]# cryptsetup luksClose /dev/mapper/secret 
+
+[root@master ~]# vim /etc/fstab 
+/dev/mapper/secret      /data   ext4    defaults        0 0
+
+[root@master ~]# vim /etc/crypttab 
+secret  /dev/md0        none
+
+If you reboot the system, it will ask for a password.
+==========================================================
+Manage modules:
+- udev process is responsible for loading new modules.
+[root@master ~]# lsmod               (list all modules)
+[root@master ~]# udevadm monitor     (monitors any newly added hardware)
+[root@master ~]# modprobe -r e1000   (remove a module and all its dependencies)
+[root@master ~]# modprobe  e1000     (add a module and all its dependencies)
+[root@master ~]# modinfo e1000
+[root@master ~]# modinfo cdrom
+[root@master ~]# ls /sys/module/     (currently loaded modules)
+==========================================================
+
+Best wishes
+Abeer :) 

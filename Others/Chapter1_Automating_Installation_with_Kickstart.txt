@@ -1,0 +1,26 @@
+# The server side:
+[root@master ~]# yum install -y system-config-kickstart
+[root@master ~]# yum install -y vsftpd
+[root@master ~]# systemctl start vsftpd
+[root@master ~]# systemctl enable vsftpd
+[root@master ~]# mount /dev/cdrom /var/ftp/pub/
+[root@master ~]# setenforce 0
+[root@master ~]# systemctl stop firewalld
+
+[root@master ~]# system-config-kickstart 
+Or)
+Applicatons> System Tools> Kickstart
+
+[root@master ~]# ksvalidator /var/ftp/ks.cfg           (to check for kick start file syntax)
+
+# The client side:
+At the begining of the installation press tab:
+linux ks=ftp://192.168.1.1/ks.cfg ip=192.168.1.2 netmask=255.255.255.0 gateway=192.168.1.254
+Or)
+linux ks=ftp://192.168.1.1:2020/ks.cfg ip=192.168.1.2 netmask=255.255.255.0 gateway=192.168.1.254
+
+• ks=http://server/dir/file
+• ks=ftp://server/dir/file
+• ks=nfs:server:/dir/file
+• ks=hd:device:/dir/file
+• ks=cdrom:/dir/file

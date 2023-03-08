@@ -1,0 +1,81 @@
+Scheduling one-time tasks with at:
+[root@master ~]# systemctl status atd              (Installed and enabled by default)
+[root@master ~]# at 16:30
+at> logger "Hello at 4:30 PM"
+at> ctrl+d
+[root@master ~]# atq                    (Query all at queues)
+[root@master ~]# atrm 1                 (Remove job number 1)
+Or)
+[root@master ~]# at now +5min
+at> touch /root/file.txt
+at> ctrl+d
+[root@master ~]# at -l                  (Query all at queues)
+[root@master ~]# at -d 2                (Remove job number 2)
+
+[root@master ~]# at 12:07pm
+[root@master ~]# at teatime tomorrow       (Tea time is 16:00)
+[root@master ~]# at noon +4 days
+[root@master ~]# at 5pm august 16 2016
+
+[root@master ~]# ls /var/spool/at/      (Holds the jobs script files)
+[root@master ~]# at -c 6            (Inspect the actual commands that will run when a job is executed)
+
+Note:
+-unprivileged users can only see and control their own jobs. root can see and manage all jobs.
+==========================================
+Scheduling Recurring Jobs with cron:
+[root@master ~]# systemctl status crond          (Installed and enabled by default)
+[root@master ~]# crontab -e                      (vi editor will be started)
+#comment line          (optional)
+Minutes      Hours      Day-of-Month       Month       Day-of-Week       Command
+
+• * for always
+• A number
+• x-y for a range
+• x,y for lists
+• */x to indicate an i nterval of x    (*/7 in the minutes column will run a job exactly every seven minutes)
+• Three-letter abbreviations can be used for both month and wee kdays.
+• If the command contains an unescaped(%) that % will be treated as a newline, and everything after the % will be fed to the command on stdin.
+
+Ex:
+0  9  2  2  *  /usr/local/bin/yearly_backup
+*/7  9-16  *  Jul  5  echo "Chime"
+58  23  *  *  1-5  tar cf /root/etc.tar /etc
+[root@master ~]# crontab -l                      (List the jobs for the current user)
+[root@master ~]# crontab -r                      (Remove all jobs for the current users)
+[root@master ~]# crontab -e -u mohd             (Root can manage the jobs for another user)
+[root@master ~]# crontab                         (stdin will be used)
+[root@master ~]# crontab <file_name>             (Remove all jobs, and replace with the jobs read from
+                                                   <file_name>)
+Note:
+- If the commands run from a cron job produce any output to either stdout or stderr that is not redirected, the crond daemon will attempt to email that output to the user owning that job. 
+
+[root@master ~]# vim /etc/crontab                 (Don't touch this file)
+==========================================
+Scheduling System cron Jobs:
+[root@master ~]# vim /etc/crontab          (not recommended to be used to schedule jobs)
+[root@master ~]# ls -d  /etc/cron.*        (predefined jobs that run every hour, day, week, and month)
+
+Note:
+- Make sure to make any scripts you place in these directories executable. 
+- The /etc/anacrontab file will make sure that important jobs will always be run, and not skipped accidentally because the system was turned off or hibernating.
+==========================================
+Managing Temporary Files:
+- In the past. system administrators used a tool called tmpwatch to remove old, unused tmp files.
+- In RHEL7 systemd will start systemd­tmpfiles-setup which is resposible for tmp files.
+- systemd-tmpfiles-clean.service will be started 15 minutes after systemd has started, and then once every 24 hours afterwards.
+- Files will be considered unused if timestamps(atime, mtime and ctime)are older than the systemd­tmpfiles age configuration. 
+- The stat command can be run on a file to see the values of all three of its time stamps.
+
+[root@master ~]# systemd-tmpfiles --remove
+[root@master ~]# vim /usr/lib/tmpfiles.d/tmp.conf    (should not be edited by system administrator)
+d /run/systemd/seats 0755 root root -
+D /home/student 0700 student student 1d
+L /run/fstablink - root root - /etc/fstab
+
+- /tmp is under systemd-tmpfiles control. To override the upstream settings:
+[root@master ~]# cp /usr/lib/tmpfiles.d/tmp.conf /etc/tmpfiles.d/
+Then change the interval from 10d to 5d.
+[root@master ~]# systemd-tmpfiles --clean tmp.conf     (Test if systemd accepts the new configuration)
+==========================================
+ 

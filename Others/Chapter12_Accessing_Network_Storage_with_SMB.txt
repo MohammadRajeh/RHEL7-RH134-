@@ -1,0 +1,51 @@
+Accessing Network Storage with SMB:
+- Samba allows file and print sharing between computers running Microsoft Windows and computers running Unix. 
+-  It is an implementation of dozens of services and a dozen protocols, including (Netbios, SMB, CIFS, WINS, DFS and more)
+- Samba (137,138 UDP and 139,445 TCP)
+
+[root@master ~]# yum install samba -y
+[root@master ~]# systemctl start smb nmb
+[root@master ~]# systemctl stop firewalld
+[root@master ~]# vim /etc/samba/smb.conf 
+[Shared_data]                             (any comment)
+path = /shared_data
+browseable = yes
+read only = yes
+writable = no
+public = yes
+hosts allow = 192.168.1.0/24
+valid users = Mohammad Rajeh Ahmad
+
+[root@master ~]# systemctl restart smb nmb
+[root@master ~]# smbpasswd -a mohd
+[root@master ~]# setenforce 0
+[root@master ~]# chmod 777 /shared_data
+
+1- For Windows users:
+run.. \\192.168.1.100
+
+2- For Linux users:
+Places.. connect to server
+smb://192.168.1.100
+=======================================================
+Mounting SMB file systems with the automounter:
+[root@client ~]# yum -y install samba-client
+[root@client ~]# smbclient -L 192.168.1.100
+[root@client ~]# yum -y install cifs-utils
+[root@client ~]# mount //192.168.1.100/Shared_data /data -o,username=mohd,password=123
+[root@client ~]# vim /etc/fstab 
+//192.168.1.100/Shared_data     /data   cifs    _netdev,username=mohd,password=123      0       0
+
+[root@client ~]# mount -a
+[root@client ~]# df -hT
+Or:
+[root@client ~]# vim /root/secure.smb            (the file name can be any thing)
+username=mohd
+password=123
+
+[root@client ~]# chmod 600 /root/secure.smb 
+[root@client ~]# vim /etc/fstab 
+//192.168.1.100/Shared_data     /data   cifs    _netdev,credentials=/root/secure.smb     0       0
+[root@client ~]# mount -a
+[root@client ~]# df -hT                                                
+=======================================================
